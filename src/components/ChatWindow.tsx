@@ -51,7 +51,7 @@ export default function ChatWindow({
     <section className="chat">
       <div className="messages">
         {messages.length === 0 && !loading && (
-          <p className="muted center">Pose ta première question à Study Buddy.</p>
+          <p className="muted center">Pose ta premiÃ¨re question Ã  Study Buddy.</p>
         )}
         {messages.map((m, i) => {
           if (m.role === 'system-notification') {
@@ -64,7 +64,7 @@ export default function ChatWindow({
           if (m.role === 'note') {
             return (
               <div key={i} className="bubble note">
-                <span className="note-label">📝 Note perso · non envoyée à l'IA</span>
+                <span className="note-label">ðŸ“ Note perso Â· non envoyÃ©e Ã  l'IA</span>
                 {m.content}
               </div>
             )
@@ -72,7 +72,7 @@ export default function ChatWindow({
           if (m.role === 'assistant') {
             return (
               <div key={i} className={`bubble assistant${m.content ? '' : ' typing'}`}>
-                {m.content ? <Markdown>{m.content}</Markdown> : '…'}
+                {m.content ? <Markdown>{m.content}</Markdown> : 'â€¦'}
               </div>
             )
           }
@@ -86,7 +86,7 @@ export default function ChatWindow({
       </div>
       <div className="toolbar">
         <label>
-          Modèle :{' '}
+          ModÃ¨le :{' '}
           <select value={model} onChange={(e) => onModelChange(e.target.value)} disabled={loading}>
             {models.map((name) => (
               <option key={name} value={name}>
@@ -101,7 +101,7 @@ export default function ChatWindow({
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Écris ton message…"
+          placeholder="Ã‰cris ton messageâ€¦"
           rows={2}
           disabled={loading}
           autoFocus

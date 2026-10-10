@@ -88,7 +88,7 @@ export async function streamMessage(
     throw new Error('Impossible de joindre le serveur.')
   }
   if (!response.ok) throw await errorFrom(response)
-  if (!response.body) throw new Error('Réponse vide du serveur.')
+  if (!response.body) throw new Error('RÃ©ponse vide du serveur.')
 
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
@@ -115,11 +115,11 @@ export async function streamMessage(
       }
     }
   } catch (err) {
-    if (err instanceof TypeError) throw new Error('La connexion a été interrompue.')
+    if (err instanceof TypeError) throw new Error('La connexion a Ã©tÃ© interrompue.')
     throw err
   } finally {
     reader.cancel().catch(() => {})
   }
-  if (!done) throw new Error('La réponse a été interrompue.')
+  if (!done) throw new Error('La rÃ©ponse a Ã©tÃ© interrompue.')
   return { notification }
 }

@@ -150,7 +150,7 @@ export default function App() {
           <div className="error" role="alert">
             {error}
             <button onClick={() => setError(null)} aria-label="Fermer">
-              ×
+              Ã—
             </button>
           </div>
         )}

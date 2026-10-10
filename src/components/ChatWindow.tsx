@@ -11,16 +11,30 @@ interface ChatWindowProps {
   messages: ChatMessage[]
   loading: boolean
   draft: string
+  models: string[]
+  model: string
+  onModelChange: (value: string) => void
   onDraftChange: (value: string) => void
   onSend: () => void
+  onNote: () => void
 }
 
-export default function ChatWindow({ messages, loading, draft, onDraftChange, onSend }: ChatWindowProps) {
+export default function ChatWindow({
+  messages,
+  loading,
+  draft,
+  models,
+  model,
+  onModelChange,
+  onDraftChange,
+  onSend,
+  onNote,
+}: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Keep the latest message in view.
+  // Keep the latest message in view (no smooth animation while the answer streams in).
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    bottomRef.current?.scrollIntoView({ behavior: loading ? 'auto' : 'smooth' })
   }, [messages, loading])
 
   function handleSubmit(event: FormEvent) {
@@ -39,20 +53,48 @@ export default function ChatWindow({ messages, loading, draft, onDraftChange, on
         {messages.length === 0 && !loading && (
           <p className="muted center">Pose ta première question à Study Buddy.</p>
         )}
-        {messages.map((m, i) =>
-          m.role === 'system-notification' ? (
-            <div key={i} className="notification">
+        {messages.map((m, i) => {
+          if (m.role === 'system-notification') {
+            return (
+              <div key={i} className="notification">
+                {m.content}
+              </div>
+            )
+          }
+          if (m.role === 'note') {
+            return (
+              <div key={i} className="bubble note">
+                <span className="note-label">📝 Note perso · non envoyée à l'IA</span>
+                {m.content}
+              </div>
+            )
+          }
+          if (m.role === 'assistant') {
+            return (
+              <div key={i} className={`bubble assistant${m.content ? '' : ' typing'}`}>
+                {m.content ? <Markdown>{m.content}</Markdown> : '…'}
+              </div>
+            )
+          }
+          return (
+            <div key={i} className="bubble user">
               {m.content}
             </div>
-          ) : (
-            <div key={i} className={`bubble ${m.role}`}>
-              {/* The LLM answers in Markdown; user messages are shown as typed. */}
-              {m.role === 'assistant' ? <Markdown>{m.content}</Markdown> : m.content}
-            </div>
-          ),
-        )}
-        {loading && <div className="bubble assistant typing">…</div>}
+          )
+        })}
         <div ref={bottomRef} />
+      </div>
+      <div className="toolbar">
+        <label>
+          Modèle :{' '}
+          <select value={model} onChange={(e) => onModelChange(e.target.value)} disabled={loading}>
+            {models.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <form className="composer" onSubmit={handleSubmit}>
         <textarea
@@ -64,7 +106,10 @@ export default function ChatWindow({ messages, loading, draft, onDraftChange, on
           disabled={loading}
           autoFocus
         />
-        <button type="submit" disabled={loading || !draft.trim()}>
+        <button type="button" className="secondary" onClick={onNote} disabled={loading || !draft.trim()}>
+          Note
+        </button>
+        <button type="submit" disabled={loading || !draft.trim() || !model}>
           Envoyer
         </button>
       </form>

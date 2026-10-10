@@ -248,3 +248,42 @@
     border-bottom: 1px solid var(--border);
   }
 }
+
+/* Note (custom role) */
+.bubble.note {
+  align-self: flex-end;
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  font-style: italic;
+}
+
+.note-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.7rem;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Model selector */
+.toolbar {
+  padding: 8px max(16px, calc((100% - 760px) / 2)) 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.toolbar select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: inherit;
+}
+
+.composer button.secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: inherit;
+}

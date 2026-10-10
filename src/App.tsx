@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import {
+  addNote,
   createConversation,
   getMessages,
+  getModels,
   listConversations,
-  sendMessage,
+  streamMessage,
   type ConversationSummary,
 } from './api'
 import ChatWindow, { type ChatMessage } from './components/ChatWindow'
@@ -21,6 +23,8 @@ export default function App() {
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [models, setModels] = useState<string[]>([])
+  const [model, setModel] = useState('')
 
   // On startup, load the history and open the most recent conversation.
   useEffect(() => {
@@ -28,6 +32,16 @@ export default function App() {
       .then((list) => {
         setConversations(list)
         if (list.length > 0) setActiveId(list[0].id)
+      })
+      .catch((err) => setError(errorMessage(err)))
+  }, [])
+
+  // Load the list of allowed models (defined server-side).
+  useEffect(() => {
+    getModels()
+      .then((list) => {
+        setModels(list)
+        setModel(list[0] ?? '')
       })
       .catch((err) => setError(errorMessage(err)))
   }, [])
@@ -77,24 +91,49 @@ export default function App() {
     const isFirstMessage = messages.length === 0
     setError(null)
     setDraft('')
-    setMessages((list) => [...list, { role: 'user', content: text }])
+    // The user's message + an empty assistant bubble that fills up as the answer streams in.
+    setMessages((list) => [
+      ...list,
+      { role: 'user', content: text },
+      { role: 'assistant', content: '' },
+    ])
     setLoading(true)
     try {
-      const { reply, notification } = await sendMessage(activeId, text)
-      setMessages((list) => [
-        ...list,
-        { role: 'assistant', content: reply },
-        ...(notification ? [{ role: 'system-notification' as const, content: notification }] : []),
-      ])
-      // The first message becomes the conversation's preview in the sidebar.
+      const { notification } = await streamMessage(activeId, text, model, (delta) => {
+        setMessages((list) => {
+          const copy = [...list]
+          const last = copy[copy.length - 1]
+          copy[copy.length - 1] = { ...last, content: last.content + delta }
+          return copy
+        })
+      })
+      if (notification) {
+        setMessages((list) => [...list, { role: 'system-notification', content: notification }])
+      }
       if (isFirstMessage) setConversations(await listConversations())
     } catch (err) {
-      // The backend didn't save the turn: drop the optimistic message and give the text back.
-      setMessages((list) => list.slice(0, -1))
+      // The backend saved nothing: drop both bubbles and give the text back.
+      setMessages((list) => list.slice(0, -2))
       setDraft(text)
       setError(errorMessage(err))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleNote() {
+    if (activeId === null) return
+    const text = draft.trim()
+    if (!text) return
+    const isFirstMessage = messages.length === 0
+    setError(null)
+    try {
+      const saved = await addNote(activeId, text)
+      setMessages((list) => [...list, { role: 'note', content: saved.content }])
+      setDraft('')
+      if (isFirstMessage) setConversations(await listConversations())
+    } catch (err) {
+      setError(errorMessage(err))
     }
   }
 
@@ -127,8 +166,12 @@ export default function App() {
             messages={messages}
             loading={loading}
             draft={draft}
+            models={models}
+            model={model}
+            onModelChange={setModel}
             onDraftChange={setDraft}
             onSend={handleSend}
+            onNote={handleNote}
           />
         )}
       </main>
